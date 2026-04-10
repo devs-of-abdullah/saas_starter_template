@@ -1,12 +1,11 @@
-﻿using Domain.Entities.Tenant;
+﻿using Domain.Entities.Common;
+using Domain.Entities.Tenant;
 using Domain.Enums.User;
 
 namespace Domain.Entities.User;
 
-public class AuditLogEntity
+public class AuditLogEntity : ImmutableEntity
 {
-    public Guid Id { get; set; }
-    public DateTimeOffset CreatedAt { get; set; }
 
     public Guid UserId { get; set; }
     public UserEntity User { get; set; } = null!;
