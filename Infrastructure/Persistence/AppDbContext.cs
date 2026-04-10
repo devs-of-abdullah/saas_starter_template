@@ -1,4 +1,4 @@
-﻿using Application.Interfaces.User;
+﻿using Application.Interfaces.Services.User;
 using Domain.Entities.Common;
 using Domain.Entities.Tenant;
 using Domain.Entities.User;

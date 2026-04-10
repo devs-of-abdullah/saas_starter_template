@@ -1,9 +1,9 @@
-﻿using Application.Interfaces.User;
-using Domain.Enums.User;
+﻿using Domain.Enums.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 using Infrastructure.Constants;
+using Application.Interfaces.Services.User;
 
 namespace Infrastructure.Services.User;
 
