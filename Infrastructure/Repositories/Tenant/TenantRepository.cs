@@ -10,6 +10,7 @@ public sealed class TenantRepository : BaseRepository<TenantEntity>, ITenantRepo
 {
     public TenantRepository(AppDbContext context) : base(context) { }
 
+    public async Task<TenantEntity?> GetBySlugAsync(string slug, CancellationToken ct = default) => await _dbSet.Include(t => t.Settings).FirstOrDefaultAsync(t => t.Settings != null && t.Settings.Slug == slug, ct);
     public async Task<TenantEntity?> GetByIdWithSettingsAsync(Guid tenantId, CancellationToken cancellationToken = default)
         => await _dbSet.Include(t => t.Settings).FirstOrDefaultAsync(t => t.Id == tenantId, cancellationToken);
 
@@ -22,3 +23,9 @@ public sealed class TenantRepository : BaseRepository<TenantEntity>, ITenantRepo
     public async Task<IReadOnlyList<TenantEntity>> GetExpiredSubscriptionsAsync(DateTimeOffset asOf, CancellationToken cancellationToken = default)
         => await _dbSet.AsNoTracking().Where(t => t.SubscriptionEndsAt.HasValue && t.SubscriptionEndsAt.Value <= asOf).ToListAsync(cancellationToken);
 }
+
+
+
+
+
+  

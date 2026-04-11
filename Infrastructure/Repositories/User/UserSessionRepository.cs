@@ -20,7 +20,9 @@ public sealed class UserSessionRepository : BaseRepository<UserSessionEntity>, I
 
     public async Task RevokeAllByUserIdAsync(Guid userId, DateTimeOffset revokedAt, CancellationToken cancellationToken = default)
         => await _dbSet.Where(s => s.UserId == userId && s.RefreshTokenRevokedAt == null).ExecuteUpdateAsync(s => s.SetProperty(x => x.RefreshTokenRevokedAt, revokedAt), cancellationToken);
+ 
 
     public async Task RevokeAllByTenantIdAsync(Guid tenantId, DateTimeOffset revokedAt, CancellationToken cancellationToken = default)
         => await _dbSet.Where(s => s.TenantId == tenantId && s.RefreshTokenRevokedAt == null).ExecuteUpdateAsync(s => s.SetProperty(x => x.RefreshTokenRevokedAt, revokedAt), cancellationToken);
 }
+

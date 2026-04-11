@@ -1,11 +1,20 @@
 ﻿namespace Domain.Enums.User;
 
 public enum AuditAction
-{
-    Login = 0,
-    Logout = 1,
-    PasswordReset = 2,
-    EmailVerified = 3,
+{   Register = 0,
+    Login = 1,
+    LoginFailed = 2,
+    Logout = 3,
+    TokenTheftDetected = 4,
+    EmailVerified = 5,
+    PasswordResetRequested = 6,
+    PasswordReset = 7,
+    PasswordChanged = 8,
+    EmailChangeRequested = 9,
+    EmailChanged = 10, 
+    RoleChanged = 11,
+    UserDeleted = 12,
+
 }
 public static class AuditActions
 {
@@ -14,3 +23,4 @@ public static class AuditActions
     public const string PasswordReset = nameof(AuditAction.PasswordReset);
     public const string EmailVerified = nameof(AuditAction.EmailVerified);
 }
+

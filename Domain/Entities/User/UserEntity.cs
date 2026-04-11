@@ -18,7 +18,12 @@ public class UserEntity : BaseEntity
     public string? EmailVerificationTokenHash { get; set; }
     public DateTimeOffset? EmailVerificationTokenExpiresAt { get; set; }
     public DateTimeOffset? EmailVerificationTokenSentAt { get; set; }
-
+    public string? PendingEmail { get; set; }
+    public string? PendingEmailTokenHash { get; set; }
+    public DateTimeOffset? PendingEmailTokenExpiresAt { get; set; }
     public ICollection<UserSessionEntity> Sessions { get; set; } = new List<UserSessionEntity>();
     public ICollection<AuditLogEntity> AuditLogs { get; set; } = new List<AuditLogEntity>();
 }
+
+
+

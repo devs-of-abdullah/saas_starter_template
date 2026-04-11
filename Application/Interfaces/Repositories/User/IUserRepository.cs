@@ -13,5 +13,11 @@ public interface IUserRepository : IBaseRepository<UserEntity>
     Task<IReadOnlyList<UserEntity>> GetByStatusAsync(UserStatus status, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<UserEntity>> GetByRoleAsync(UserRole role, Guid tenantId, CancellationToken cancellationToken = default);
     Task<UserEntity?> GetByResetTokenHashAsync(string resetTokenHash, CancellationToken cancellationToken = default);
-    Task<UserEntity?> GetByEmailVerificationTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default);
+    Task<UserEntity?> GetByEmailVerificationTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default); 
+    Task<UserEntity?> GetByPendingEmailTokenHashAsync(string tokenHash, CancellationToken cancellationToken = default); 
+    Task<IReadOnlyList<UserEntity>> GetByTenantIdPagedAsync(Guid tenantId, int page, int pageSize, CancellationToken cancellationToken = default);
+
+
 }
+
+

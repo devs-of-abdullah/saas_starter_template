@@ -1,13 +1,14 @@
-﻿using Application.Interfaces.Repositories.Tenant;
+﻿using Application.Interfaces.Repositories;
+using Application.Interfaces.Repositories.Tenant;
 
-namespace Application.Interfaces.Repositories.Common;
+namespace Application.Interfaces.Common;
 
-public interface IUnitOfWork
+public interface IUnitOfWork : IAsyncDisposable
 {
-    ITenantRepository Tenants { get; }
-    ITenantSettingsRepository TenantSettings { get; }
     IUserRepository Users { get; }
+    ITenantRepository Tenants { get; }
     IUserSessionRepository UserSessions { get; }
     IAuditLogRepository AuditLogs { get; }
-    Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
 }
