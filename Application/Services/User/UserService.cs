@@ -1,4 +1,4 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.DTOs.User;
 using Application.Interfaces.Common;
 using Application.Interfaces.Email;
@@ -7,14 +7,15 @@ using Domain.Entities.User;
 using Domain.Enums.User;
 using Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
+using ValidationException = Domain.Exceptions.ValidationException;
 
-namespace Application.Services;
+namespace Application.Services.User;
 
 public sealed class UserService : IUserService
 {
-    readonly IUnitOfWork _uow;
-    readonly IPasswordHasher<UserEntity> _hasher;
-    readonly IEmailBackgroundQueue _emailQueue;
+    private readonly IUnitOfWork _uow;
+    private readonly IPasswordHasher<UserEntity> _hasher;
+    private readonly IEmailBackgroundQueue _emailQueue;
 
     public UserService(IUnitOfWork uow, IPasswordHasher<UserEntity> hasher, IEmailBackgroundQueue emailQueue)
     {
@@ -23,11 +24,9 @@ public sealed class UserService : IUserService
         _emailQueue = emailQueue;
     }
 
-
-
     public async Task<ReadUserDTO> GetByIdAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
     {
-        var user = await GetUserInTenantAsync(userId, tenantId, ct);
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
         return MapToDTO(user);
     }
 
@@ -39,20 +38,18 @@ public sealed class UserService : IUserService
         if (pageSize < 1 || pageSize > 100)
             throw new ValidationException(nameof(pageSize), "Page size must be between 1 and 100.");
 
-        var users = await _uow.Users.GetByTenantIdPagedAsync(tenantId, page, pageSize, ct);
+        IReadOnlyList<UserEntity> users = await _uow.Users.GetByTenantIdPagedAsync(tenantId, page, pageSize, ct);
         return users.Select(MapToDTO).ToList();
     }
 
-   
-
     public async Task UpdatePasswordAsync(Guid userId, Guid tenantId, UpdateUserPasswordDTO dto, CancellationToken ct = default)
     {
-        var user = await GetUserInTenantAsync(userId, tenantId, ct);
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
 
         if (dto.CurrentPassword == dto.NewPassword)
             throw new ValidationException(nameof(dto.NewPassword), "New password must differ from current password.");
 
-        var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+        PasswordVerificationResult result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
         if (result == PasswordVerificationResult.Failed)
             throw new UnauthorizedException("Current password is incorrect.");
 
@@ -63,25 +60,23 @@ public sealed class UserService : IUserService
         await _uow.SaveChangesAsync(ct);
     }
 
-
-
     public async Task UpdateEmailAsync(Guid userId, Guid tenantId, UpdateUserEmailDTO dto, CancellationToken ct = default)
     {
-        var user = await GetUserInTenantAsync(userId, tenantId, ct);
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
 
-        var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+        PasswordVerificationResult result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
         if (result == PasswordVerificationResult.Failed)
             throw new UnauthorizedException("Current password is incorrect.");
 
-        var newEmail = dto.NewEmail.Trim().ToLowerInvariant();
+        string newEmail = dto.NewEmail.Trim().ToLowerInvariant();
 
         if (newEmail == user.Email)
-            throw new ValidationException(nameof(dto.NewEmail), "New email must differ from current email.");
+            throw new ValidationException(nameof(dto.NewEmail), "New email must be different from current email.");
 
         if (await _uow.Users.ExistsByEmailAsync(newEmail, tenantId, ct))
             throw new ConflictException("Email is already in use.");
 
-        var code = CryptoHelpers.GenerateSecureCode();
+        string code = CryptoHelpers.GenerateSecureCode();
         user.PendingEmail = newEmail;
         user.PendingEmailTokenHash = CryptoHelpers.HashToken(code);
         user.PendingEmailTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
@@ -92,12 +87,10 @@ public sealed class UserService : IUserService
         _emailQueue.EnqueueEmailChange(newEmail, code);
     }
 
-
-
     public async Task<bool> ConfirmEmailChangeAsync(string code, CancellationToken ct = default)
     {
-        var tokenHash = CryptoHelpers.HashToken(code);
-        var user = await _uow.Users.GetByPendingEmailTokenHashAsync(tokenHash, ct);
+        string tokenHash = CryptoHelpers.HashToken(code);
+        UserEntity? user = await _uow.Users.GetByPendingEmailTokenHashAsync(tokenHash, ct);
 
         if (user is null) return false;
 
@@ -118,25 +111,26 @@ public sealed class UserService : IUserService
 
     public async Task UpdateRoleAsync(Guid userId, Guid tenantId, UpdateUserRoleDTO dto, CancellationToken ct = default)
     {
-        var user = await GetUserInTenantAsync(userId, tenantId, ct);
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
 
         if (dto.NewRole == UserRole.SystemOwner)
             throw new ForbiddenException("SystemOwner role cannot be assigned through this endpoint.");
 
         if (user.Role == dto.NewRole) return;
 
-        var previousRole = user.Role;
+        UserRole previousRole = user.Role;
         user.Role = dto.NewRole;
 
-        await _uow.AuditLogs.AddAsync(BuildLog(user.Id, user.TenantId, AuditAction.RoleChanged,description: $"{previousRole} → {dto.NewRole}"), ct);
+        await _uow.AuditLogs.AddAsync(
+            BuildLog(user.Id, user.TenantId, AuditAction.RoleChanged, description: $"{previousRole} → {dto.NewRole}"), ct);
         await _uow.SaveChangesAsync(ct);
     }
 
     public async Task DeleteAsync(Guid userId, Guid tenantId, DeleteUserDTO dto, CancellationToken ct = default)
     {
-        var user = await GetUserInTenantAsync(userId, tenantId, ct);
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
 
-        var result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
+        PasswordVerificationResult result = _hasher.VerifyHashedPassword(user, user.PasswordHash, dto.CurrentPassword);
         if (result == PasswordVerificationResult.Failed)
             throw new UnauthorizedException("Current password is incorrect.");
 
@@ -147,11 +141,22 @@ public sealed class UserService : IUserService
         await _uow.SaveChangesAsync(ct);
     }
 
- 
+    public async Task AdminDeleteAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
+    {
+        UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
+
+        await _uow.UserSessions.RevokeAllByUserIdAsync(user.Id, DateTimeOffset.UtcNow, ct);
+        await _uow.AuditLogs.AddAsync(BuildLog(user.Id, user.TenantId, AuditAction.UserDeleted), ct);
+
+        _uow.Users.Delete(user);
+        await _uow.SaveChangesAsync(ct);
+    }
+
+
 
     async Task<UserEntity> GetUserInTenantAsync(Guid userId, Guid tenantId, CancellationToken ct)
     {
-        var user = await _uow.Users.GetByIdAsync(userId, ct)
+        UserEntity? user = await _uow.Users.GetByIdAsync(userId, ct)
             ?? throw new NotFoundException($"User '{userId}' not found.");
 
         if (user.TenantId != tenantId)
@@ -170,12 +175,12 @@ public sealed class UserService : IUserService
         UpdatedAt = user.UpdatedAt
     };
 
-    static AuditLogEntity BuildLog(Guid userId, Guid tenantId, AuditAction action,string? description = null, bool isSuccess = true) => new()
+    static AuditLogEntity BuildLog(Guid userId,Guid tenantId,AuditAction action,string? description = null,bool isSuccess = true) => new()
     {
-            UserId = userId,
-            TenantId = tenantId,
-            Action = action,
-            Description = description,
-            IsSuccess = isSuccess
+        UserId = userId,
+        TenantId = tenantId,
+        Action = action,
+        Description = description,
+        IsSuccess = isSuccess
     };
 }

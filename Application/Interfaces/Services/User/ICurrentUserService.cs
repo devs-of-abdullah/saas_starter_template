@@ -1,4 +1,4 @@
-﻿namespace Application.Interfaces.Services.User;
+namespace Application.Interfaces.Services.User;
 
 public interface ICurrentUserService
 {
@@ -6,5 +6,4 @@ public interface ICurrentUserService
     Guid? TenantId { get; }
     bool IsSystemOwner { get; }
     bool IsAuthenticated { get; }
-
 }

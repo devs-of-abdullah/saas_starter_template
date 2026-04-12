@@ -10,8 +10,8 @@ namespace Infrastructure.Services.Email;
 
 public sealed class EmailService : IEmailService
 {
-    private readonly EmailSettings _settings;
-    private readonly ILogger<EmailService> _logger;
+    readonly EmailSettings _settings;
+    readonly ILogger<EmailService> _logger;
 
     public EmailService(IOptions<EmailSettings> options, ILogger<EmailService> logger)
     {
@@ -19,14 +19,11 @@ public sealed class EmailService : IEmailService
         _logger = logger;
     }
 
-    public Task SendEmailVerificationAsync(string to, string code, CancellationToken ct = default)
-        => SendAsync(to, "Verify your email", EmailTemplates.VerificationEmail(code), ct);
+    public Task SendEmailVerificationAsync(string to, string code, CancellationToken ct = default) => SendAsync(to, "Verify your email", EmailTemplates.VerificationEmail(code), ct);
 
-    public Task SendPasswordResetAsync(string to, string code, CancellationToken ct = default)
-        => SendAsync(to, "Reset your password", EmailTemplates.PasswordResetEmail(code), ct);
+    public Task SendPasswordResetAsync(string to, string code, CancellationToken ct = default) => SendAsync(to, "Reset your password", EmailTemplates.PasswordResetEmail(code), ct);
 
-    public Task SendEmailChangeAsync(string to, string code, CancellationToken ct = default)
-        => SendAsync(to, "Confirm your new email address", EmailTemplates.EmailChangeEmail(code), ct);
+    public Task SendEmailChangeAsync(string to, string code, CancellationToken ct = default) => SendAsync(to, "Confirm your new email address", EmailTemplates.EmailChangeEmail(code), ct);
 
     private async Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct)
     {
@@ -47,8 +44,7 @@ public sealed class EmailService : IEmailService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex,
-                "Failed to send email to {To} with subject '{Subject}'", to, subject);
+            _logger.LogError(ex, "Failed to send email to {To} with subject '{Subject}'", to, subject);
             throw;
         }
         finally

@@ -1,7 +1,8 @@
-﻿namespace Domain.Exceptions;
+namespace Domain.Exceptions;
 
-public class ConflictException : Exception
+public sealed class ConflictException : DomainException
 {
     public ConflictException(string message) : base(message) { }
+
     public ConflictException(string entity, string field, object value) : base($"{entity} with {field} '{value}' already exists.") { }
 }

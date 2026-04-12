@@ -1,0 +1,138 @@
+Build started...
+Build succeeded.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (18ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (2ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (15ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [MigrationId], [ProductVersion]
+      FROM [__EFMigrationsHistory]
+      ORDER BY [MigrationId];
+info: Microsoft.EntityFrameworkCore.Migrations[20402]
+      Applying migration '20260412123645_AddPendingEmailFields'.
+Applying migration '20260412123645_AddPendingEmailFields'.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Tenants] (
+          [Id] uniqueidentifier NOT NULL,
+          [Status] nvarchar(50) NOT NULL,
+          [Plan] nvarchar(50) NOT NULL,
+          [SubscriptionEndsAt] datetimeoffset NULL,
+          [CreatedAt] datetimeoffset NOT NULL,
+          [UpdatedAt] datetimeoffset NULL,
+          [CreatedBy] uniqueidentifier NULL,
+          [UpdatedBy] uniqueidentifier NULL,
+          [RowVersion] rowversion NOT NULL,
+          CONSTRAINT [PK_Tenants] PRIMARY KEY ([Id])
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (6ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [TenantSettings] (
+          [Id] uniqueidentifier NOT NULL,
+          [TenantId] uniqueidentifier NOT NULL,
+          [Name] nvarchar(256) NOT NULL,
+          [Slug] nvarchar(100) NOT NULL,
+          [LogoUrl] nvarchar(2048) NULL,
+          [FaviconUrl] nvarchar(2048) NULL,
+          [Description] nvarchar(1000) NULL,
+          [PrimaryColor] nvarchar(7) NULL,
+          [SecondaryColor] nvarchar(7) NULL,
+          [SmtpHost] nvarchar(256) NULL,
+          [SmtpPort] int NULL,
+          [SmtpSenderEmail] nvarchar(256) NULL,
+          [SmtpSenderPasswordEncrypted] nvarchar(1024) NULL,
+          [CreatedAt] datetimeoffset NOT NULL,
+          [UpdatedAt] datetimeoffset NULL,
+          [CreatedBy] uniqueidentifier NULL,
+          [UpdatedBy] uniqueidentifier NULL,
+          [RowVersion] rowversion NOT NULL,
+          CONSTRAINT [PK_TenantSettings] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_TenantSettings_Tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [Tenants] ([Id]) ON DELETE CASCADE
+      );
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [Users] (
+          [Id] uniqueidentifier NOT NULL,
+          [TenantId] uniqueidentifier NOT NULL,
+          [Email] nvarchar(256) NOT NULL,
+          [PasswordHash] nvarchar(512) NOT NULL,
+          [Role] nvarchar(50) NOT NULL,
+          [Status] nvarchar(50) NOT NULL,
+          [ResetTokenHash] nvarchar(512) NULL,
+          [ResetTokenExpiresAt] datetimeoffset NULL,
+          [IsEmailVerified] bit NOT NULL,
+          [EmailVerificationTokenHash] nvarchar(512) NULL,
+          [EmailVerificationTokenExpiresAt] datetimeoffset NULL,
+          [EmailVerificationTokenSentAt] datetimeoffset NULL,
+          [PendingEmail] nvarchar(max) NULL,
+          [PendingEmailTokenHash] nvarchar(max) NULL,
+          [PendingEmailTokenExpiresAt] datetimeoffset NULL,
+          [CreatedAt] datetimeoffset NOT NULL,
+          [UpdatedAt] datetimeoffset NULL,
+          [CreatedBy] uniqueidentifier NULL,
+          [UpdatedBy] uniqueidentifier NULL,
+          [RowVersion] rowversion NOT NULL,
+          CONSTRAINT [PK_Users] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_Users_Tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [Tenants] ([Id]) ON DELETE NO ACTION
+      );
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (18ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      CREATE TABLE [AuditLogs] (
+          [Id] uniqueidentifier NOT NULL,
+          [UserId] uniqueidentifier NOT NULL,
+          [TenantId] uniqueidentifier NOT NULL,
+          [Action] nvarchar(100) NOT NULL,
+          [Description] nvarchar(1000) NULL,
+          [IpAddress] nvarchar(45) NULL,
+          [UserAgent] nvarchar(1024) NULL,
+          [IsSuccess] bit NOT NULL,
+          [CreatedAt] datetimeoffset NOT NULL,
+          CONSTRAINT [PK_AuditLogs] PRIMARY KEY ([Id]),
+          CONSTRAINT [FK_AuditLogs_Tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [Tenants] ([Id]) ON DELETE NO ACTION,
+          CONSTRAINT [FK_AuditLogs_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE SET NULL
+      );
+Failed executing DbCommand (18ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+CREATE TABLE [AuditLogs] (
+    [Id] uniqueidentifier NOT NULL,
+    [UserId] uniqueidentifier NOT NULL,
+    [TenantId] uniqueidentifier NOT NULL,
+    [Action] nvarchar(100) NOT NULL,
+    [Description] nvarchar(1000) NULL,
+    [IpAddress] nvarchar(45) NULL,
+    [UserAgent] nvarchar(1024) NULL,
+    [IsSuccess] bit NOT NULL,
+    [CreatedAt] datetimeoffset NOT NULL,
+    CONSTRAINT [PK_AuditLogs] PRIMARY KEY ([Id]),
+    CONSTRAINT [FK_AuditLogs_Tenants_TenantId] FOREIGN KEY ([TenantId]) REFERENCES [Tenants] ([Id]) ON DELETE NO ACTION,
+    CONSTRAINT [FK_AuditLogs_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [Users] ([Id]) ON DELETE SET NULL
+);
+Microsoft.Data.SqlClient.SqlException (0x80131904): Cannot create the foreign key "FK_AuditLogs_Users_UserId" with the SET NULL referential action, because one or more referencing columns are not nullable.
+Could not create constraint or index. See previous errors.
+   at Microsoft.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.SqlInternalConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at Microsoft.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at Microsoft.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at Microsoft.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean isAsync, Int32 timeout, Boolean asyncWrite)
+   at Microsoft.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean& usedCache, Boolean asyncWrite, Boolean inRetry, String methodName)
+   at Microsoft.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQuery(RelationalCommandParameterObject parameterObject)
+   at Microsoft.EntityFrameworkCore.Migrations.MigrationCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.Design.Internal.MigrationsOperations.UpdateDatabase(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabaseImpl(String targetMigration, String connectionString, String contextType)
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.UpdateDatabase.<>c__DisplayClass0_0.<.ctor>b__0()
+   at Microsoft.EntityFrameworkCore.Design.OperationExecutor.OperationBase.Execute(Action action)
+ClientConnectionId:3b9ffd39-59ec-44c7-b53d-67a945b8a28d
+Error Number:1761,State:0,Class:16
+Cannot create the foreign key "FK_AuditLogs_Users_UserId" with the SET NULL referential action, because one or more referencing columns are not nullable.
+Could not create constraint or index. See previous errors.

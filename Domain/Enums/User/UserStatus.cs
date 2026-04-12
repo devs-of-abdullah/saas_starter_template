@@ -7,10 +7,3 @@ public enum UserStatus
     Suspended = 2,
     Banned = 3,
 }
-public static class UserStatuses
-{
-    public const string PendingVerification = nameof(UserStatus.PendingVerification);
-    public const string Active = nameof(UserStatus.Active);
-    public const string Suspended = nameof(UserStatus.Suspended);
-    public const string Banned = nameof(UserStatus.Banned);
-}

@@ -1,8 +1,8 @@
-﻿using Domain.Entities.Common;
+using Domain.Entities.Common;
 
 namespace Domain.Entities.Tenant;
 
-public class TenantSettingsEntity : BaseEntity
+public sealed class TenantSettingsEntity : BaseEntity
 {
     public Guid TenantId { get; set; }
     public TenantEntity Tenant { get; set; } = default!;

@@ -1,46 +1,54 @@
-﻿using Domain.Enums.User;
+using Application.Constants;
+using Application.Interfaces.Services.User;
+using Domain.Enums.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
-using Infrastructure.Constants;
-using Application.Interfaces.Services.User;
 
 namespace Infrastructure.Services.User;
 
+/// <summary>Extracts identity claims from the current HTTP request's JWT principal.</summary>
 public sealed class CurrentUserService : ICurrentUserService
 {
+    /// <inheritdoc/>
     public Guid? UserId { get; }
+
+    /// <inheritdoc/>
     public Guid? TenantId { get; }
+
+    /// <inheritdoc/>
     public bool IsSystemOwner { get; }
+
+    /// <inheritdoc/>
     public bool IsAuthenticated { get; }
 
-
+    /// <summary>Initialises the service from the current HTTP context.</summary>
     public CurrentUserService(IHttpContextAccessor accessor, ILogger<CurrentUserService> logger)
     {
-        var user = accessor.HttpContext?.User;
+        ClaimsPrincipal? user = accessor.HttpContext?.User;
 
         if (user?.Identity?.IsAuthenticated != true)
             return;
 
         IsAuthenticated = true;
         UserId = ParseGuidClaim(user, ClaimTypes.NameIdentifier, logger);
-        TenantId = ParseGuidClaim(user, ClaimNames.TenantId, logger);
-        IsSystemOwner = user.IsInRole(UserRoles.SystemOwner);
-
-        IsSystemOwner = user.IsInRole(UserRoles.SystemOwner);
+        TenantId = ParseGuidClaim(user, ClaimConstants.TenantId, logger);
+        IsSystemOwner = user.IsInRole(UserRole.SystemOwner.ToString());
     }
-    static Guid? ParseGuidClaim(ClaimsPrincipal user, string claimType, ILogger logger)
+
+    private static Guid? ParseGuidClaim(ClaimsPrincipal user, string claimType, ILogger logger)
     {
-        var value = user.FindFirst(claimType)?.Value;
+        string? value = user.FindFirst(claimType)?.Value;
 
         if (value is null)
             return null;
 
-        if(Guid.TryParse(value, out var guid))
+        if (Guid.TryParse(value, out Guid guid))
             return guid;
 
-        logger.LogWarning("Failed to parse claim {ClaimType} with value {ClaimValue} as Guid", claimType, value);
+        logger.LogWarning(
+            "Failed to parse claim {ClaimType} with value {ClaimValue} as Guid",
+            claimType, value);
         return null;
-
     }
 }

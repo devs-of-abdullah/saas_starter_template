@@ -1,4 +1,4 @@
-﻿namespace Application.Settings.Email;
+namespace Application.Settings.Email;
 
 public sealed class EmailSettings
 {

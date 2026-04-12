@@ -9,7 +9,7 @@ namespace Infrastructure.Persistence;
 
 public sealed class AppDbContext : DbContext
 {
-    private readonly ICurrentUserService _currentUser;
+    readonly ICurrentUserService _currentUser;
 
     public AppDbContext(DbContextOptions<AppDbContext> options, ICurrentUserService currentUser) : base(options)
     {
@@ -28,8 +28,7 @@ public sealed class AppDbContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        //No registration needed. No manual calls  this register all configurations
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly); //No registration needed. No manual calls  this register all configurations
         ApplyGlobalQueryFilters(modelBuilder);
     }
 

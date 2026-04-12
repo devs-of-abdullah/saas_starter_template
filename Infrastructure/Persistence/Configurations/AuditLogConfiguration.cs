@@ -1,4 +1,4 @@
-﻿using Domain.Entities.User;
+using Domain.Entities.User;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -23,7 +23,7 @@ public sealed class AuditLogConfiguration : IEntityTypeConfiguration<AuditLogEnt
         builder.Property(a => a.IpAddress).HasMaxLength(45);
         builder.Property(a => a.UserAgent).HasMaxLength(1024);
 
-        builder.HasOne(a => a.User).WithMany(u => u.AuditLogs).HasForeignKey(a => a.UserId).IsRequired(false).OnDelete(DeleteBehavior.SetNull);
+        builder.HasOne(a => a.User).WithMany(u => u.AuditLogs).HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(a => a.Tenant).WithMany().HasForeignKey(a => a.TenantId).OnDelete(DeleteBehavior.Restrict);
     }

@@ -1,8 +1,9 @@
-﻿using Domain.Entities.Common;
+using Domain.Entities.Common;
 using Domain.Entities.Tenant;
 
 namespace Domain.Entities.User;
-public class UserSessionEntity : BaseEntity
+
+public sealed class UserSessionEntity : BaseEntity
 {
     public Guid UserId { get; set; }
     public UserEntity User { get; set; } = null!;
@@ -12,7 +13,7 @@ public class UserSessionEntity : BaseEntity
 
     public string RefreshTokenHash { get; set; } = null!;
     public DateTimeOffset RefreshTokenExpiresAt { get; set; }
-    public DateTimeOffset? RefreshTokenRevokedAt { get; set; }  
+    public DateTimeOffset? RefreshTokenRevokedAt { get; set; }
 
     public string? DeviceInfo { get; set; }
     public string? IpAddress { get; set; }

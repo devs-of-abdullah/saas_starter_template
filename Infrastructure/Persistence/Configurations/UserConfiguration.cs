@@ -21,6 +21,8 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserEntity>
         builder.Property(u => u.PasswordHash).HasMaxLength(512).IsRequired();
         builder.Property(u => u.ResetTokenHash).HasMaxLength(512);
         builder.Property(u => u.EmailVerificationTokenHash).HasMaxLength(512);
+        builder.Property(u => u.PendingEmail).HasMaxLength(256);
+        builder.Property(u => u.PendingEmailTokenHash).HasMaxLength(512);
 
         builder.Property(u => u.Role).HasConversion<string>().HasMaxLength(50).IsRequired();
 
@@ -28,6 +30,6 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserEntity>
 
         builder.HasMany(u => u.Sessions).WithOne(s => s.User).HasForeignKey(s => s.UserId).OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(u => u.AuditLogs).WithOne(a => a.User).HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.SetNull);
+        builder.HasMany(u => u.AuditLogs).WithOne(a => a.User).HasForeignKey(a => a.UserId).OnDelete(DeleteBehavior.Restrict);
     }
 }

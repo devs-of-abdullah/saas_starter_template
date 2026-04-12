@@ -1,7 +1,7 @@
-﻿using Application.Common;
+using Application.Common;
 using Application.DTOs.Auth;
-using Application.Interfaces.Common;
 using Application.Interfaces.Auth;
+using Application.Interfaces.Common;
 using Application.Interfaces.Email;
 using Application.Settings.Auth;
 using Domain.Entities.User;
@@ -10,7 +10,7 @@ using Domain.Exceptions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
-namespace Application.Services;
+namespace Application.Services.Auth;
 
 public sealed class AuthService : IAuthService
 {
@@ -19,13 +19,14 @@ public sealed class AuthService : IAuthService
     readonly IEmailBackgroundQueue _emailQueue;
     readonly IPasswordHasher<UserEntity> _hasher;
     readonly JwtSettings _settings;
+
     const int MaxIpAddressLength = 45;
     const int MaxUserAgentLength = 512;
     const int MaxDeviceInfoLength = 512;
 
-    static readonly UserEntity _dummyUser = new() { PasswordHash = string.Empty };
+    private static readonly UserEntity DummyUser = new() { PasswordHash = string.Empty };
 
-    public AuthService(IUnitOfWork uow, ITokenService tokenService, IEmailBackgroundQueue emailQueue,IPasswordHasher<UserEntity> hasher, IOptions<JwtSettings> settings)
+    public AuthService(IUnitOfWork uow,ITokenService tokenService,IEmailBackgroundQueue emailQueue,IPasswordHasher<UserEntity> hasher,IOptions<JwtSettings> settings)
     {
         _uow = uow;
         _tokenService = tokenService;
@@ -34,14 +35,13 @@ public sealed class AuthService : IAuthService
         _settings = settings.Value;
     }
 
-
     public async Task RegisterAsync(RegisterRequestDTO request, CancellationToken ct = default)
     {
-        var tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
+        Domain.Entities.Tenant.TenantEntity tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
             ?? throw new NotFoundException($"Tenant '{request.TenantSlug}' not found.");
 
-        var email = request.Email.Trim().ToLowerInvariant();
-        var existing = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
+        string email = request.Email.Trim().ToLowerInvariant();
+        UserEntity? existing = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
 
         if (existing is not null)
         {
@@ -52,7 +52,7 @@ public sealed class AuthService : IAuthService
                 existing.EmailVerificationTokenSentAt.Value.AddMinutes(1) > DateTimeOffset.UtcNow)
                 throw new TooManyRequestsException("Please wait 1 minute before requesting a new code.");
 
-            var resendCode = CryptoHelpers.GenerateSecureCode();
+            string resendCode = CryptoHelpers.GenerateSecureCode();
             existing.EmailVerificationTokenHash = CryptoHelpers.HashToken(resendCode);
             existing.EmailVerificationTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
             existing.EmailVerificationTokenSentAt = DateTimeOffset.UtcNow;
@@ -62,7 +62,7 @@ public sealed class AuthService : IAuthService
             return;
         }
 
-        var user = new UserEntity
+        UserEntity user = new()
         {
             Email = email,
             TenantId = tenant.Id,
@@ -72,7 +72,7 @@ public sealed class AuthService : IAuthService
 
         user.PasswordHash = _hasher.HashPassword(user, request.Password);
 
-        var code = CryptoHelpers.GenerateSecureCode();
+        string code = CryptoHelpers.GenerateSecureCode();
         user.EmailVerificationTokenHash = CryptoHelpers.HashToken(code);
         user.EmailVerificationTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         user.EmailVerificationTokenSentAt = DateTimeOffset.UtcNow;
@@ -84,28 +84,27 @@ public sealed class AuthService : IAuthService
         _emailQueue.EnqueueVerification(user.Email, code);
     }
 
-    
-
-    public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request, string? ipAddress, string? userAgent, string? deviceInfo, CancellationToken ct = default)
+    public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request,string? ipAddress,string? userAgent,string? deviceInfo,CancellationToken ct = default)
     {
-        var tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
+        Domain.Entities.Tenant.TenantEntity tenant =
+            await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
             ?? throw new NotFoundException($"Tenant '{request.TenantSlug}' not found.");
 
-        var email = request.Email.Trim().ToLowerInvariant();
-        var user = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
+        string email = request.Email.Trim().ToLowerInvariant();
+        UserEntity? user = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
 
-        var targetUser = user ?? _dummyUser;
-        var targetHash = user is not null ? user.PasswordHash : CryptoHelpers.GenerateSecureToken();
-        var verifyResult = _hasher.VerifyHashedPassword(targetUser, targetHash, request.Password);
-        var passwordValid = user is not null && verifyResult != PasswordVerificationResult.Failed;
+        UserEntity targetUser = user ?? DummyUser;
+        string targetHash = user is not null ? user.PasswordHash : CryptoHelpers.GenerateSecureToken();
+        PasswordVerificationResult verifyResult = _hasher.VerifyHashedPassword(targetUser, targetHash, request.Password);
+        bool passwordValid = user is not null && verifyResult != PasswordVerificationResult.Failed;
 
         if (!passwordValid)
         {
             if (user is not null)
                 await _uow.AuditLogs.AddAsync(
                     BuildLog(user.Id, tenant.Id, AuditAction.LoginFailed,
-                        Truncate(ipAddress, MaxIpAddressLength),
-                        Truncate(userAgent, MaxUserAgentLength),
+                        ipAddress: Truncate(ipAddress, MaxIpAddressLength),
+                        userAgent: Truncate(userAgent, MaxUserAgentLength),
                         isSuccess: false), ct);
 
             await _uow.SaveChangesAsync(ct);
@@ -118,26 +117,32 @@ public sealed class AuthService : IAuthService
         if (user.Status is UserStatus.Banned or UserStatus.Suspended)
             throw new ForbiddenException("Account is not active.");
 
-        var (accessToken, refreshToken, session) = CreateSession(user, tenant.Id, Truncate(ipAddress, MaxIpAddressLength), Truncate(userAgent, MaxUserAgentLength), Truncate(deviceInfo, MaxDeviceInfoLength));
+        (string accessToken, string refreshToken, UserSessionEntity session) =
+            CreateSession(user, tenant.Id,
+                Truncate(ipAddress, MaxIpAddressLength),
+                Truncate(userAgent, MaxUserAgentLength),
+                Truncate(deviceInfo, MaxDeviceInfoLength));
 
         await _uow.UserSessions.AddAsync(session, ct);
-        await _uow.AuditLogs.AddAsync(BuildLog(user.Id, tenant.Id, AuditAction.Login,Truncate(ipAddress, MaxIpAddressLength), Truncate(userAgent, MaxUserAgentLength)), ct);
+        await _uow.AuditLogs.AddAsync(
+            BuildLog(user.Id, tenant.Id, AuditAction.Login,
+                ipAddress: Truncate(ipAddress, MaxIpAddressLength),
+                userAgent: Truncate(userAgent, MaxUserAgentLength)), ct);
 
         await _uow.SaveChangesAsync(ct);
         return new TokenResponseDTO(accessToken, refreshToken, session.RefreshTokenExpiresAt);
     }
 
-
-
     public async Task<TokenResponseDTO> RefreshAsync(RefreshRequestDTO request, CancellationToken ct = default)
     {
-        var tokenHash = CryptoHelpers.HashToken(request.RefreshToken);
-        var session = await _uow.UserSessions.GetByRefreshTokenHashAsync(tokenHash, ct);
+        string tokenHash = CryptoHelpers.HashToken(request.RefreshToken);
+        UserSessionEntity? session = await _uow.UserSessions.GetByRefreshTokenHashAsync(tokenHash, ct);
 
         if (session is not null && session.RefreshTokenRevokedAt.HasValue)
         {
             await _uow.UserSessions.RevokeAllByUserIdAsync(session.UserId, DateTimeOffset.UtcNow, ct);
-            await _uow.AuditLogs.AddAsync(BuildLog(session.UserId, session.TenantId, AuditAction.TokenTheftDetected, isSuccess: false), ct);
+            await _uow.AuditLogs.AddAsync(
+                BuildLog(session.UserId, session.TenantId, AuditAction.TokenTheftDetected, isSuccess: false), ct);
             await _uow.SaveChangesAsync(ct);
             throw new UnauthorizedException("Security alert: your session was invalidated. Please log in again.");
         }
@@ -148,7 +153,7 @@ public sealed class AuthService : IAuthService
         if (session.RefreshTokenExpiresAt <= DateTimeOffset.UtcNow)
             throw new UnauthorizedException("Refresh token has expired. Please log in again.");
 
-        var user = await _uow.Users.GetByIdAsync(session.UserId, ct)
+        UserEntity user = await _uow.Users.GetByIdAsync(session.UserId, ct)
             ?? throw new UnauthorizedException("User not found.");
 
         if (user.Status is UserStatus.Banned or UserStatus.Suspended)
@@ -156,29 +161,30 @@ public sealed class AuthService : IAuthService
 
         session.RefreshTokenRevokedAt = DateTimeOffset.UtcNow;
 
-        var (accessToken, refreshToken, newSession) = CreateSession(user, user.TenantId, session.IpAddress, session.UserAgent, session.DeviceInfo);
+        (string accessToken, string refreshToken, UserSessionEntity newSession) =
+            CreateSession(user, user.TenantId, session.IpAddress, session.UserAgent, session.DeviceInfo);
 
         await _uow.UserSessions.AddAsync(newSession, ct);
         await _uow.SaveChangesAsync(ct);
         return new TokenResponseDTO(accessToken, refreshToken, newSession.RefreshTokenExpiresAt);
     }
 
-
     public async Task LogoutAsync(string refreshToken, CancellationToken ct = default)
     {
-        var tokenHash = CryptoHelpers.HashToken(refreshToken);
-        var session = await _uow.UserSessions.GetByRefreshTokenHashAsync(tokenHash, ct);
+        string tokenHash = CryptoHelpers.HashToken(refreshToken);
+        UserSessionEntity? session = await _uow.UserSessions.GetByRefreshTokenHashAsync(tokenHash, ct);
 
         if (session is null || session.RefreshTokenRevokedAt.HasValue) return;
 
         session.RefreshTokenRevokedAt = DateTimeOffset.UtcNow;
+        await _uow.AuditLogs.AddAsync(BuildLog(session.UserId, session.TenantId, AuditAction.Logout), ct);
         await _uow.SaveChangesAsync(ct);
     }
 
     public async Task<EmailVerificationResult> VerifyEmailAsync(VerifyEmailRequestDTO request, CancellationToken ct = default)
     {
-        var tokenHash = CryptoHelpers.HashToken(request.Code);
-        var user = await _uow.Users.GetByEmailVerificationTokenHashAsync(tokenHash, ct);
+        string tokenHash = CryptoHelpers.HashToken(request.Code);
+        UserEntity? user = await _uow.Users.GetByEmailVerificationTokenHashAsync(tokenHash, ct);
 
         if (user is null) return EmailVerificationResult.InvalidCode;
         if (user.IsEmailVerified) return EmailVerificationResult.AlreadyVerified;
@@ -197,13 +203,13 @@ public sealed class AuthService : IAuthService
         return EmailVerificationResult.Success;
     }
 
-
     public async Task ResendVerificationEmailAsync(ResendVerificationRequestDTO request, CancellationToken ct = default)
     {
-        var tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct);
+        Domain.Entities.Tenant.TenantEntity? tenant =
+            await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct);
         if (tenant is null) return;
 
-        var user = await _uow.Users.GetByEmailAsync(
+        UserEntity? user = await _uow.Users.GetByEmailAsync(
             request.Email.Trim().ToLowerInvariant(), tenant.Id, ct);
 
         if (user is null || user.IsEmailVerified) return;
@@ -212,7 +218,7 @@ public sealed class AuthService : IAuthService
             user.EmailVerificationTokenSentAt.Value.AddMinutes(1) > DateTimeOffset.UtcNow)
             throw new TooManyRequestsException("Please wait 1 minute before requesting a new code.");
 
-        var code = CryptoHelpers.GenerateSecureCode();
+        string code = CryptoHelpers.GenerateSecureCode();
         user.EmailVerificationTokenHash = CryptoHelpers.HashToken(code);
         user.EmailVerificationTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         user.EmailVerificationTokenSentAt = DateTimeOffset.UtcNow;
@@ -221,41 +227,37 @@ public sealed class AuthService : IAuthService
         _emailQueue.EnqueueVerification(user.Email, code);
     }
 
-
-
     public async Task ForgotPasswordAsync(ForgotPasswordRequestDTO request, CancellationToken ct = default)
     {
-        var tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct);
+        Domain.Entities.Tenant.TenantEntity? tenant =
+            await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct);
         if (tenant is null) return;
 
-        var user = await _uow.Users.GetByEmailAsync(
+        UserEntity? user = await _uow.Users.GetByEmailAsync(
             request.Email.Trim().ToLowerInvariant(), tenant.Id, ct);
-
         if (user is null) return;
 
         if (user.ResetTokenExpiresAt.HasValue &&
             user.ResetTokenExpiresAt.Value.AddHours(1).Subtract(TimeSpan.FromMinutes(59)) > DateTimeOffset.UtcNow)
             return;
 
-        var code = CryptoHelpers.GenerateSecureCode();
+        string code = CryptoHelpers.GenerateSecureCode();
         user.ResetTokenHash = CryptoHelpers.HashToken(code);
         user.ResetTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
 
         await _uow.AuditLogs.AddAsync(BuildLog(user.Id, tenant.Id, AuditAction.PasswordResetRequested), ct);
-
         await _uow.SaveChangesAsync(ct);
         _emailQueue.EnqueuePasswordReset(user.Email, code);
     }
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request, CancellationToken ct = default)
     {
-        var tokenHash = CryptoHelpers.HashToken(request.Code);
-        var user = await _uow.Users.GetByResetTokenHashAsync(tokenHash, ct);
+        string tokenHash = CryptoHelpers.HashToken(request.Code);
+        UserEntity? user = await _uow.Users.GetByResetTokenHashAsync(tokenHash, ct);
 
         if (user is null) return false;
 
-        if (user.ResetTokenExpiresAt is null ||
-            user.ResetTokenExpiresAt <= DateTimeOffset.UtcNow)
+        if (user.ResetTokenExpiresAt is null || user.ResetTokenExpiresAt <= DateTimeOffset.UtcNow)
             return false;
 
         user.PasswordHash = _hasher.HashPassword(user, request.NewPassword);
@@ -268,12 +270,12 @@ public sealed class AuthService : IAuthService
         return true;
     }
 
-     (string accessToken, string refreshToken, UserSessionEntity session) CreateSession( UserEntity user, Guid tenantId, string? ipAddress, string? userAgent, string? deviceInfo)
-     {
-        var accessToken = _tokenService.GenerateAccessToken(user);
-        var refreshToken = CryptoHelpers.GenerateSecureToken();
+    (string accessToken, string refreshToken, UserSessionEntity session) CreateSession(UserEntity user,Guid tenantId,string? ipAddress,string? userAgent,string? deviceInfo)
+    {
+        string accessToken = _tokenService.GenerateAccessToken(user);
+        string refreshToken = CryptoHelpers.GenerateSecureToken();
 
-        var session = new UserSessionEntity
+        UserSessionEntity session = new()
         {
             UserId = user.Id,
             TenantId = tenantId,
@@ -288,15 +290,15 @@ public sealed class AuthService : IAuthService
         return (accessToken, refreshToken, session);
     }
 
-     static AuditLogEntity BuildLog(Guid userId, Guid tenantId, AuditAction action, string? ipAddress = null, string? userAgent = null, bool isSuccess = true) => new()
-        {
-            UserId = userId,
-            TenantId = tenantId,
-            Action = action,
-            IpAddress = ipAddress,
-            UserAgent = userAgent,
-            IsSuccess = isSuccess
-        };
+    static AuditLogEntity BuildLog(Guid userId,Guid tenantId, AuditAction action, string? ipAddress = null, string? userAgent = null, bool isSuccess = true) => new()
+    {
+        UserId = userId,
+        TenantId = tenantId,
+        Action = action,
+        IpAddress = ipAddress,
+        UserAgent = userAgent,
+        IsSuccess = isSuccess
+    };
 
     static string? Truncate(string? value, int maxLength) => value is null ? null : value[..Math.Min(value.Length, maxLength)];
 }

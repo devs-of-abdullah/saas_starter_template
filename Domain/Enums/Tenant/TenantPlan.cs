@@ -7,10 +7,4 @@ public enum TenantPlan
     Enterprise = 2
 }
 
-public static class TenantPlans
-{
-    public const string Free = nameof(TenantPlan.Free);
-    public const string Pro = nameof(TenantPlan.Pro);
-    public const string Enterprise = nameof(TenantPlan.Enterprise);
 
-}
