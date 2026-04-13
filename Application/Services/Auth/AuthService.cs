@@ -16,21 +16,21 @@ public sealed class AuthService : IAuthService
 {
     readonly IUnitOfWork _uow;
     readonly ITokenService _tokenService;
-    readonly IEmailBackgroundQueue _emailQueue;
+    readonly IEmailOutbox _emailOutbox;
     readonly IPasswordHasher<UserEntity> _hasher;
     readonly JwtSettings _settings;
 
     const int MaxIpAddressLength = 45;
     const int MaxUserAgentLength = 512;
-    const int MaxDeviceInfoLength = 512;
+    const int MaxDeviceInfoLength = 256;
 
     private static readonly UserEntity DummyUser = new() { PasswordHash = string.Empty };
 
-    public AuthService(IUnitOfWork uow,ITokenService tokenService,IEmailBackgroundQueue emailQueue,IPasswordHasher<UserEntity> hasher,IOptions<JwtSettings> settings)
+    public AuthService(IUnitOfWork uow, ITokenService tokenService, IEmailOutbox emailOutbox, IPasswordHasher<UserEntity> hasher, IOptions<JwtSettings> settings)
     {
         _uow = uow;
         _tokenService = tokenService;
-        _emailQueue = emailQueue;
+        _emailOutbox = emailOutbox;
         _hasher = hasher;
         _settings = settings.Value;
     }
@@ -60,8 +60,8 @@ public sealed class AuthService : IAuthService
             existing.EmailVerificationTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
             existing.EmailVerificationTokenSentAt = DateTimeOffset.UtcNow;
 
+            _emailOutbox.AddVerification(existing.Email, resendCode);
             await _uow.SaveChangesAsync(ct);
-            _emailQueue.EnqueueVerification(existing.Email, resendCode);
             return;
         }
 
@@ -82,9 +82,8 @@ public sealed class AuthService : IAuthService
 
         await _uow.Users.AddAsync(user, ct);
         await _uow.AuditLogs.AddAsync(BuildLog(user.Id, tenant.Id, AuditAction.Register), ct);
+        _emailOutbox.AddVerification(user.Email, code);
         await _uow.SaveChangesAsync(ct);
-
-        _emailQueue.EnqueueVerification(user.Email, code);
     }
 
     public async Task<TokenResponseDTO> LoginAsync(LoginRequestDTO request,string? ipAddress,string? userAgent,string? deviceInfo,CancellationToken ct = default)
@@ -229,8 +228,8 @@ public sealed class AuthService : IAuthService
         user.EmailVerificationTokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15);
         user.EmailVerificationTokenSentAt = DateTimeOffset.UtcNow;
 
+        _emailOutbox.AddVerification(user.Email, code);
         await _uow.SaveChangesAsync(ct);
-        _emailQueue.EnqueueVerification(user.Email, code);
     }
 
     public async Task ForgotPasswordAsync(ForgotPasswordRequestDTO request, CancellationToken ct = default)
@@ -252,8 +251,8 @@ public sealed class AuthService : IAuthService
         user.ResetTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
 
         await _uow.AuditLogs.AddAsync(BuildLog(user.Id, tenant.Id, AuditAction.PasswordResetRequested), ct);
+        _emailOutbox.AddPasswordReset(user.Email, code);
         await _uow.SaveChangesAsync(ct);
-        _emailQueue.EnqueuePasswordReset(user.Email, code);
     }
 
     public async Task<bool> ResetPasswordAsync(ResetPasswordRequestDTO request, CancellationToken ct = default)

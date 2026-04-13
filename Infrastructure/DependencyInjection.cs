@@ -19,6 +19,7 @@ using Infrastructure.Persistence.Repositories.Tenant;
 using Infrastructure.Persistence.Repositories.User;
 using Infrastructure.Persistence.Seeders;
 using Infrastructure.Services.Auth;
+using Infrastructure.Services.Background;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.User;
 using Microsoft.AspNetCore.Identity;
@@ -43,6 +44,15 @@ public static class DependencyInjection
 
         services.Configure<Application.Settings.Email.EmailSettings>(opts =>
             configuration.GetSection("EmailSettings").Bind(opts));
+
+        // Allow SMTP_PASSWORD environment variable to override the config value so that
+        // the password can be injected at runtime without touching appsettings files.
+        services.PostConfigure<Application.Settings.Email.EmailSettings>(opts =>
+        {
+            string? envPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD");
+            if (!string.IsNullOrWhiteSpace(envPassword))
+                opts.SmtpPassword = envPassword;
+        });
 
         // -------------------------------------------------------------------------
         // Persistence
@@ -90,13 +100,21 @@ public static class DependencyInjection
         services.AddScoped<DatabaseSeeder>();
 
         // -------------------------------------------------------------------------
-        // Email
+        // Email — outbox pattern
+        //   EmailOutbox     : scoped writer; stages emails in the current UoW scope
+        //   OutboxEmailProcessor : background delivery with retry + lease-based
+        //                          distributed claim
         // -------------------------------------------------------------------------
 
-        services.AddSingleton<EmailBackgroundQueue>();
-        services.AddSingleton<IEmailBackgroundQueue>(sp => sp.GetRequiredService<EmailBackgroundQueue>());
-        services.AddHostedService(sp => sp.GetRequiredService<EmailBackgroundQueue>());
+        services.AddScoped<IEmailOutbox, EmailOutbox>();
         services.AddTransient<IEmailService, EmailService>();
+        services.AddHostedService<OutboxEmailProcessor>();
+
+        // -------------------------------------------------------------------------
+        // Background maintenance
+        // -------------------------------------------------------------------------
+
+        services.AddHostedService<SessionCleanupService>();
 
         return services;
     }

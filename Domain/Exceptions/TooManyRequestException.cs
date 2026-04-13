@@ -1,5 +1,3 @@
+// This file is intentionally empty.
+// The class was renamed to TooManyRequestsException and lives in TooManyRequestsException.cs.
 namespace Domain.Exceptions;
-public sealed class TooManyRequestsException : DomainException
-{ 
-    public TooManyRequestsException(string message = "Too many requests. Please try again later.") : base(message) { }
-}

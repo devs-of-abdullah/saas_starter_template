@@ -7,5 +7,5 @@ public sealed class EmailSettings
     public string SmtpServer { get; init; } = null!;
     public int SmtpPort { get; init; } = 587;
     public string SmtpUsername { get; init; } = null!;
-    public string SmtpPassword { get; init; } = null!;
+    public string SmtpPassword { get; set; } = null!;
 }

@@ -47,7 +47,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "SystemOwner,TenantSuperAdmin,TenantAdmin")]
+    [Authorize(Roles = "TenantSuperAdmin,TenantAdmin")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<ReadUserDTO>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
     {
@@ -107,7 +107,7 @@ public sealed class UsersController : ControllerBase
 
  
     [HttpPatch("{id:guid}/role")]
-    [Authorize(Roles = "SystemOwner,TenantSuperAdmin")]
+    [Authorize(Roles = "TenantSuperAdmin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateRole(Guid id, [FromBody] UpdateUserRoleDTO request, CancellationToken ct)
@@ -117,7 +117,7 @@ public sealed class UsersController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "SystemOwner,TenantSuperAdmin")]
+    [Authorize(Roles = "TenantSuperAdmin")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status404NotFound)]

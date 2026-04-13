@@ -1,5 +1,6 @@
 using Application.Interfaces.Services.User;
 using Domain.Entities.Common;
+using Domain.Entities.Email;
 using Domain.Entities.System;
 using Domain.Entities.Tenant;
 using Domain.Entities.User;
@@ -28,6 +29,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<SystemOwnerEntity> SystemOwners => Set<SystemOwnerEntity>();
     public DbSet<SystemOwnerSessionEntity> SystemOwnerSessions => Set<SystemOwnerSessionEntity>();
     public DbSet<SystemOwnerAuditLogEntity> SystemOwnerAuditLogs => Set<SystemOwnerAuditLogEntity>();
+    public DbSet<OutboxEmailEntity> OutboxEmails => Set<OutboxEmailEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

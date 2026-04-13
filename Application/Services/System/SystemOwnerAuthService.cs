@@ -17,7 +17,7 @@ public sealed class SystemOwnerAuthService : ISystemOwnerAuthService
 {
     readonly IUnitOfWork _uow;
     readonly ITokenService _tokenService;
-    readonly IEmailBackgroundQueue _emailQueue;
+    readonly IEmailOutbox _emailOutbox;
     readonly IPasswordHasher<SystemOwnerEntity> _hasher;
     readonly JwtSettings _settings;
 
@@ -31,13 +31,13 @@ public sealed class SystemOwnerAuthService : ISystemOwnerAuthService
     public SystemOwnerAuthService(
         IUnitOfWork uow,
         ITokenService tokenService,
-        IEmailBackgroundQueue emailQueue,
+        IEmailOutbox emailOutbox,
         IPasswordHasher<SystemOwnerEntity> hasher,
         IOptions<JwtSettings> settings)
     {
         _uow = uow;
         _tokenService = tokenService;
-        _emailQueue = emailQueue;
+        _emailOutbox = emailOutbox;
         _hasher = hasher;
         _settings = settings.Value;
     }
@@ -159,8 +159,8 @@ public sealed class SystemOwnerAuthService : ISystemOwnerAuthService
         owner.ResetTokenHash = CryptoHelpers.HashToken(code);
         owner.ResetTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
 
+        _emailOutbox.AddPasswordReset(owner.Email, code);
         await _uow.SaveChangesAsync(ct);
-        _emailQueue.EnqueuePasswordReset(owner.Email, code);
     }
 
     public async Task<bool> ResetPasswordAsync(

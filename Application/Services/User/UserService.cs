@@ -15,13 +15,13 @@ public sealed class UserService : IUserService
 {
     private readonly IUnitOfWork _uow;
     private readonly IPasswordHasher<UserEntity> _hasher;
-    private readonly IEmailBackgroundQueue _emailQueue;
+    private readonly IEmailOutbox _emailOutbox;
 
-    public UserService(IUnitOfWork uow, IPasswordHasher<UserEntity> hasher, IEmailBackgroundQueue emailQueue)
+    public UserService(IUnitOfWork uow, IPasswordHasher<UserEntity> hasher, IEmailOutbox emailOutbox)
     {
         _uow = uow;
         _hasher = hasher;
-        _emailQueue = emailQueue;
+        _emailOutbox = emailOutbox;
     }
 
     public async Task<ReadUserDTO> GetByIdAsync(Guid userId, Guid tenantId, CancellationToken ct = default)
@@ -82,9 +82,8 @@ public sealed class UserService : IUserService
         user.PendingEmailTokenExpiresAt = DateTimeOffset.UtcNow.AddHours(1);
 
         await _uow.AuditLogs.AddAsync(BuildLog(user.Id, user.TenantId, AuditAction.EmailChangeRequested), ct);
+        _emailOutbox.AddEmailChange(newEmail, code);
         await _uow.SaveChangesAsync(ct);
-
-        _emailQueue.EnqueueEmailChange(newEmail, code);
     }
 
     public async Task<bool> ConfirmEmailChangeAsync(string code, CancellationToken ct = default)

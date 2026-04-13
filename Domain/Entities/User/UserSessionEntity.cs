@@ -18,5 +18,5 @@ public sealed class UserSessionEntity : BaseEntity
     public string? DeviceInfo { get; set; }
     public string? IpAddress { get; set; }
     public string? UserAgent { get; set; }
-    public DateTimeOffset? LastUsedAt { get; set; }
+    public DateTimeOffset LastUsedAt { get; set; }
 }

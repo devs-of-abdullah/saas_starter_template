@@ -8,6 +8,7 @@ using FluentValidation.AspNetCore;
 using Infrastructure;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
 using System.Text.Json.Serialization;
 
 namespace API.Extensions;
@@ -24,7 +25,22 @@ public static class ServiceExtensions
         string connectionString = Environment.GetEnvironmentVariable("DefaultConnection") ?? configuration.GetConnectionString("DefaultConnection") 
             ?? throw new InvalidOperationException("Database connection string not found.");
 
-        services.AddDbContext<AppDbContext>(options =>options.UseSqlServer(connectionString, b => b.MigrationsAssembly("Infrastructure")));
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseSqlServer(connectionString, b =>
+            {
+                b.MigrationsAssembly("Infrastructure");
+                b.EnableRetryOnFailure(
+                    maxRetryCount: 3,
+                    maxRetryDelay: TimeSpan.FromSeconds(5),
+                    errorNumbersToAdd: null);
+            }));
+
+        // Redis — optional. When ConnectionStrings:Redis is present the rate limiter
+        // and any future caching uses Redis; otherwise falls back to in-process.
+        string? redisConnectionString = configuration.GetConnectionString("Redis");
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            services.AddSingleton<IConnectionMultiplexer>(
+                _ => ConnectionMultiplexer.Connect(redisConnectionString));
         services.AddAuthInfrastructure(configuration);
         services.AddHttpContextAccessor();
         services.AddFluentValidationAutoValidation();
@@ -76,7 +92,20 @@ public static class ServiceExtensions
             });
         }); 
 
-        services.AddHealthChecks().AddDbContextCheck<AppDbContext>();
+        // 1-year max-age is the recommended baseline for HSTS preload eligibility.
+        services.AddHsts(o =>
+        {
+            o.MaxAge            = TimeSpan.FromDays(365);
+            o.IncludeSubDomains = true;
+        });
+
+        IHealthChecksBuilder healthChecks = services
+            .AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>()
+            .AddCheck<API.HealthChecks.SmtpHealthCheck>("smtp");
+
+        if (!string.IsNullOrWhiteSpace(redisConnectionString))
+            healthChecks.AddCheck<API.HealthChecks.RedisHealthCheck>("redis");
 
         return services;
     }
@@ -103,7 +132,14 @@ public static class ServiceExtensions
         EmailSettings email = new();
         configuration.GetSection("EmailSettings").Bind(email);
 
-        if (string.IsNullOrWhiteSpace(email.SmtpPassword) || email.SmtpPassword.StartsWith("REPLACE", StringComparison.OrdinalIgnoreCase))
-            throw new InvalidOperationException("EmailSettings:SmtpPassword is not configured. " + "Set the SMTP_PASSWORD environment variable or appsettings override.");
+        // Accept the value from config or from the SMTP_PASSWORD environment variable.
+        string effectiveSmtpPassword =
+            Environment.GetEnvironmentVariable("SMTP_PASSWORD") ?? email.SmtpPassword;
+
+        if (string.IsNullOrWhiteSpace(effectiveSmtpPassword) ||
+            effectiveSmtpPassword.StartsWith("REPLACE", StringComparison.OrdinalIgnoreCase))
+            throw new InvalidOperationException(
+                "EmailSettings:SmtpPassword is not configured. " +
+                "Set the SMTP_PASSWORD environment variable or appsettings override.");
     }
 }

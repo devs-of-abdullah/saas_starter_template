@@ -5,9 +5,9 @@ namespace Domain.Entities.Tenant;
 public sealed class TenantSettingsEntity : BaseEntity
 {
     public Guid TenantId { get; set; }
-    public TenantEntity Tenant { get; set; } = default!;
-    public string Name { get; set; } = default!;
-    public string Slug { get; set; } = default!;
+    public TenantEntity Tenant { get; set; } = null!;
+    public string Name { get; set; } = null!;
+    public string Slug { get; set; } = null!;
     public string? LogoUrl { get; set; }
     public string? FaviconUrl { get; set; }
     public string? Description { get; set; }
