@@ -1,6 +1,7 @@
 using Application.Constants;
 using Application.Interfaces.Auth;
 using Application.Settings.Auth;
+using Domain.Entities.System;
 using Domain.Entities.User;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -21,11 +22,6 @@ public sealed class TokenService : ITokenService
 
     public string GenerateAccessToken(UserEntity user)
     {
-        using RSA rsa = RSA.Create();
-        rsa.ImportFromPem(_settings.PrivateKeyPem);
-
-        SigningCredentials credentials = new(new RsaSecurityKey(rsa) { KeyId = "primary" }, SecurityAlgorithms.RsaSha256);
-
         Claim[] claims =
         [
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
@@ -33,6 +29,31 @@ public sealed class TokenService : ITokenService
             new Claim(ClaimTypes.Email, user.Email),
             new Claim(ClaimTypes.Role, user.Role.ToString())
         ];
+
+        return BuildToken(claims);
+    }
+
+    public string GenerateSystemOwnerAccessToken(SystemOwnerEntity owner)
+    {
+        Claim[] claims =
+        [
+            new Claim(ClaimTypes.NameIdentifier, owner.Id.ToString()),
+            new Claim(ClaimTypes.Email, owner.Email),
+            new Claim(ClaimTypes.Role, "SystemOwner")
+        ];
+
+        return BuildToken(claims);
+    }
+
+    string BuildToken(Claim[] claims)
+    {
+        using RSA rsa = RSA.Create();
+        rsa.ImportFromPem(_settings.PrivateKeyPem);
+
+        SigningCredentials credentials = new( new RsaSecurityKey(rsa) { KeyId = "primary" }, SecurityAlgorithms.RsaSha256)
+        {
+            CryptoProviderFactory = new CryptoProviderFactory { CacheSignatureProviders = false }
+        };
 
         JwtSecurityToken token = new(
             issuer: _settings.Issuer,

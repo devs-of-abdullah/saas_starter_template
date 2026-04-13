@@ -31,4 +31,6 @@ public sealed class UserRepository : BaseRepository<UserEntity>, IUserRepository
     public async Task<IReadOnlyList<UserEntity>> GetByStatusAsync(UserStatus status, CancellationToken cancellationToken = default) => await _dbSet.AsNoTracking().Where(u => u.Status == status).ToListAsync(cancellationToken);
 
     public async Task<IReadOnlyList<UserEntity>> GetByRoleAsync(UserRole role, Guid tenantId, CancellationToken cancellationToken = default) => await _dbSet.AsNoTracking().Where(u => u.Role == role && u.TenantId == tenantId).ToListAsync(cancellationToken);
+
+    public async Task<int> CountByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default) => await _dbSet.AsNoTracking().CountAsync(u => u.TenantId == tenantId, cancellationToken);
 }

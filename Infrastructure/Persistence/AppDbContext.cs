@@ -1,5 +1,6 @@
-﻿using Application.Interfaces.Services.User;
+using Application.Interfaces.Services.User;
 using Domain.Entities.Common;
+using Domain.Entities.System;
 using Domain.Entities.Tenant;
 using Domain.Entities.User;
 using Domain.Exceptions;
@@ -24,6 +25,9 @@ public sealed class AppDbContext : DbContext
     public DbSet<UserEntity> Users => Set<UserEntity>();
     public DbSet<UserSessionEntity> UserSessions => Set<UserSessionEntity>();
     public DbSet<AuditLogEntity> AuditLogs => Set<AuditLogEntity>();
+    public DbSet<SystemOwnerEntity> SystemOwners => Set<SystemOwnerEntity>();
+    public DbSet<SystemOwnerSessionEntity> SystemOwnerSessions => Set<SystemOwnerSessionEntity>();
+    public DbSet<SystemOwnerAuditLogEntity> SystemOwnerAuditLogs => Set<SystemOwnerAuditLogEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -34,13 +38,13 @@ public sealed class AppDbContext : DbContext
 
     void ApplyGlobalQueryFilters(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<TenantSettingsEntity>().HasQueryFilter(s => _currentUser.IsSystemOwner || s.TenantId == _currentUser.TenantId);
+        modelBuilder.Entity<TenantSettingsEntity>().HasQueryFilter(s => !_currentUser.IsAuthenticated || _currentUser.IsSystemOwner || s.TenantId == _currentUser.TenantId);
 
-        modelBuilder.Entity<UserEntity>().HasQueryFilter(u => _currentUser.IsSystemOwner || u.TenantId == _currentUser.TenantId);
+        modelBuilder.Entity<UserEntity>().HasQueryFilter(u => !_currentUser.IsAuthenticated || _currentUser.IsSystemOwner || u.TenantId == _currentUser.TenantId);
 
-        modelBuilder.Entity<UserSessionEntity>().HasQueryFilter(s => _currentUser.IsSystemOwner || s.TenantId == _currentUser.TenantId);
+        modelBuilder.Entity<UserSessionEntity>().HasQueryFilter(s => !_currentUser.IsAuthenticated || _currentUser.IsSystemOwner || s.TenantId == _currentUser.TenantId);
 
-        modelBuilder.Entity<AuditLogEntity>().HasQueryFilter(a => _currentUser.IsSystemOwner || a.TenantId == _currentUser.TenantId);
+        modelBuilder.Entity<AuditLogEntity>().HasQueryFilter(a => !_currentUser.IsAuthenticated || _currentUser.IsSystemOwner || a.TenantId == _currentUser.TenantId);
     }
 
     public override int SaveChanges()
@@ -62,7 +66,7 @@ public sealed class AppDbContext : DbContext
         var now = DateTimeOffset.UtcNow;
         var userId = _currentUser.UserId;
 
-        foreach (var entry in ChangeTracker.Entries<AuditLogEntity>())
+        foreach (var entry in ChangeTracker.Entries<ImmutableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
@@ -71,7 +75,7 @@ public sealed class AppDbContext : DbContext
             }
 
             if (entry.State is EntityState.Modified or EntityState.Deleted)
-                throw new ImmutableEntityException(nameof(AuditLogEntity));
+                throw new ImmutableEntityException(entry.Entity.GetType().Name);
         }
 
         foreach (var entry in ChangeTracker.Entries<BaseEntity>())

@@ -1,6 +1,5 @@
 using Application.Constants;
 using Application.Interfaces.Services.User;
-using Domain.Enums.User;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Security.Claims;
@@ -33,7 +32,7 @@ public sealed class CurrentUserService : ICurrentUserService
         IsAuthenticated = true;
         UserId = ParseGuidClaim(user, ClaimTypes.NameIdentifier, logger);
         TenantId = ParseGuidClaim(user, ClaimConstants.TenantId, logger);
-        IsSystemOwner = user.IsInRole(UserRole.SystemOwner.ToString());
+        IsSystemOwner = user.IsInRole("SystemOwner");
     }
 
     private static Guid? ParseGuidClaim(ClaimsPrincipal user, string claimType, ILogger logger)

@@ -15,4 +15,9 @@ public enum AuditAction
     EmailChanged = 10,
     RoleChanged = 11,
     UserDeleted = 12,
+    TenantCreated = 13,
+    TenantUpdated = 14,
+    TenantSuspended = 15,
+    TenantCancelled = 16,
+    TenantPlanChanged = 17,
 }

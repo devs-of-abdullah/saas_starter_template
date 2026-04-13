@@ -40,6 +40,9 @@ public sealed class AuthService : IAuthService
         Domain.Entities.Tenant.TenantEntity tenant = await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
             ?? throw new NotFoundException($"Tenant '{request.TenantSlug}' not found.");
 
+        if (tenant.Status is Domain.Enums.Tenant.TenantStatus.Suspended or Domain.Enums.Tenant.TenantStatus.Cancelled)
+            throw new ForbiddenException("This tenant account is not active.");
+
         string email = request.Email.Trim().ToLowerInvariant();
         UserEntity? existing = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
 
@@ -90,11 +93,14 @@ public sealed class AuthService : IAuthService
             await _uow.Tenants.GetBySlugAsync(request.TenantSlug.Trim().ToLowerInvariant(), ct)
             ?? throw new NotFoundException($"Tenant '{request.TenantSlug}' not found.");
 
+        if (tenant.Status is Domain.Enums.Tenant.TenantStatus.Suspended or Domain.Enums.Tenant.TenantStatus.Cancelled)
+            throw new ForbiddenException("This tenant account is not active.");
+
         string email = request.Email.Trim().ToLowerInvariant();
         UserEntity? user = await _uow.Users.GetByEmailAsync(email, tenant.Id, ct);
 
         UserEntity targetUser = user ?? DummyUser;
-        string targetHash = user is not null ? user.PasswordHash : CryptoHelpers.GenerateSecureToken();
+        string targetHash = user is not null ? user.PasswordHash : _hasher.HashPassword(DummyUser, "Invalid123!");
         PasswordVerificationResult verifyResult = _hasher.VerifyHashedPassword(targetUser, targetHash, request.Password);
         bool passwordValid = user is not null && verifyResult != PasswordVerificationResult.Failed;
 

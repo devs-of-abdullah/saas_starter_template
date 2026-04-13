@@ -1,4 +1,4 @@
-﻿using Application.Settings.Auth;
+using Application.Settings.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -20,7 +20,7 @@ public static class AuthenticationExtensions
                 var rsa = RSA.Create();
                 rsa.ImportFromPem(settings.PublicKeyPem.AsSpan());
 
-                bearerOptions.RequireHttpsMetadata = true;
+                bearerOptions.RequireHttpsMetadata = false;
                 bearerOptions.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,

@@ -2,31 +2,34 @@ using Application.Interfaces.Auth;
 using Application.Interfaces.Common;
 using Application.Interfaces.Email;
 using Application.Interfaces.Repositories;
+using Application.Interfaces.Repositories.System;
 using Application.Interfaces.Repositories.Tenant;
+using Application.Interfaces.Services.Tenant;
 using Application.Interfaces.Services.User;
+using Application.Interfaces.System;
 using Application.Services.Auth;
+using Application.Services.System;
+using Application.Services.Tenant;
 using Application.Services.User;
+using Domain.Entities.System;
 using Domain.Entities.User;
 using Infrastructure.Persistence;
+using Infrastructure.Persistence.Repositories.System;
 using Infrastructure.Persistence.Repositories.Tenant;
 using Infrastructure.Persistence.Repositories.User;
+using Infrastructure.Persistence.Seeders;
 using Infrastructure.Services.Auth;
 using Infrastructure.Services.Email;
 using Infrastructure.Services.User;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 
 namespace Infrastructure;
 
 /// <summary>Registers all Infrastructure-layer services with the DI container.</summary>
 public static class DependencyInjection
 {
-    /// <summary>
-    /// Adds settings, repositories, unit of work, domain services, and email services
-    /// to the service collection.
-    /// </summary>
     public static IServiceCollection AddAuthInfrastructure(
         this IServiceCollection services,
         IConfiguration configuration)
@@ -56,12 +59,16 @@ public static class DependencyInjection
         services.AddScoped<IUserSessionRepository, UserSessionRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<ITenantSettingsRepository, TenantSettingsRepository>();
+        services.AddScoped<ISystemOwnerRepository, SystemOwnerRepository>();
+        services.AddScoped<ISystemOwnerSessionRepository, SystemOwnerSessionRepository>();
+        services.AddScoped<ISystemOwnerAuditLogRepository, SystemOwnerAuditLogRepository>();
 
         // -------------------------------------------------------------------------
         // Identity
         // -------------------------------------------------------------------------
 
         services.AddScoped<IPasswordHasher<UserEntity>, PasswordHasher<UserEntity>>();
+        services.AddScoped<IPasswordHasher<SystemOwnerEntity>, PasswordHasher<SystemOwnerEntity>>();
 
         // -------------------------------------------------------------------------
         // Services
@@ -70,14 +77,22 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ITenantService, TenantService>();
+        services.AddScoped<ISystemOwnerAuthService, SystemOwnerAuthService>();
+        services.AddScoped<ISystemOwnerService, SystemOwnerService>();
+        services.AddScoped<ITenantManagementService, TenantManagementService>();
         services.AddSingleton<ITokenService, TokenService>();
+
+        // -------------------------------------------------------------------------
+        // Seeders
+        // -------------------------------------------------------------------------
+
+        services.AddScoped<DatabaseSeeder>();
 
         // -------------------------------------------------------------------------
         // Email
         // -------------------------------------------------------------------------
 
-        // Register as a singleton so the same Channel instance is shared between
-        // IEmailBackgroundQueue (called by services) and IHostedService (the dequeue loop).
         services.AddSingleton<EmailBackgroundQueue>();
         services.AddSingleton<IEmailBackgroundQueue>(sp => sp.GetRequiredService<EmailBackgroundQueue>());
         services.AddHostedService(sp => sp.GetRequiredService<EmailBackgroundQueue>());

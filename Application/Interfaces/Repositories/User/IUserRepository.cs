@@ -36,4 +36,7 @@ public interface IUserRepository : IBaseRepository<UserEntity>
 
     /// <summary>Returns a page of users ordered by email for the given tenant.</summary>
     Task<IReadOnlyList<UserEntity>> GetByTenantIdPagedAsync(Guid tenantId, int page, int pageSize, CancellationToken cancellationToken = default);
+
+    /// <summary>Returns the total count of users belonging to the given tenant.</summary>
+    Task<int> CountByTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
 }

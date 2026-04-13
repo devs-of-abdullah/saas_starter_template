@@ -113,9 +113,6 @@ public sealed class UserService : IUserService
     {
         UserEntity user = await GetUserInTenantAsync(userId, tenantId, ct);
 
-        if (dto.NewRole == UserRole.SystemOwner)
-            throw new ForbiddenException("SystemOwner role cannot be assigned through this endpoint.");
-
         if (user.Role == dto.NewRole) return;
 
         UserRole previousRole = user.Role;

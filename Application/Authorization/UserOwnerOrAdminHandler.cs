@@ -1,31 +1,22 @@
-﻿using Domain.Enums.User;
+using Domain.Enums.User;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
 namespace Application.Authorization;
 
-
 public sealed class UserOwnerOrAdminHandler : AuthorizationHandler<UserOwnerOrAdminRequirement, Guid>
 {
-    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, UserOwnerOrAdminRequirement requirement, Guid requestedUserId)
+    protected override Task HandleRequirementAsync(AuthorizationHandlerContext context,UserOwnerOrAdminRequirement requirement, Guid requestedUserId)
     {
-        if (context.User.IsInRole(UserRole.SystemOwner.ToString()))
-        {
-            context.Succeed(requirement);
-            return Task.CompletedTask;
-        }
-
-       
         if (context.User.IsInRole(UserRole.TenantSuperAdmin.ToString()) || context.User.IsInRole(UserRole.TenantAdmin.ToString()))
         {
             context.Succeed(requirement);
             return Task.CompletedTask;
         }
 
-        var claim = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        string? claim = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (Guid.TryParse(claim, out var authenticatedUserId) &&
-            authenticatedUserId == requestedUserId)
+        if (Guid.TryParse(claim, out Guid authenticatedUserId) && authenticatedUserId == requestedUserId)
         {
             context.Succeed(requirement);
         }
@@ -33,4 +24,3 @@ public sealed class UserOwnerOrAdminHandler : AuthorizationHandler<UserOwnerOrAd
         return Task.CompletedTask;
     }
 }
-

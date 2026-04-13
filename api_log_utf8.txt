@@ -1,0 +1,190 @@
+﻿Using launch settings from API\Properties\launchSettings.json...
+Building...
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (19ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (13ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (1ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT [MigrationId], [ProductVersion]
+      FROM [__EFMigrationsHistory]
+      ORDER BY [MigrationId];
+info: Microsoft.EntityFrameworkCore.Migrations[20405]
+      No migrations were applied. The database is already up to date.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (22ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [SystemOwners] AS [s]) THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:5000
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\Ahmed\Desktop\saas_starter_template\API
+warn: Microsoft.AspNetCore.HttpsPolicy.HttpsRedirectionMiddleware[3]
+      Failed to determine the https port for redirect.
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (10ms) [Parameters=[], CommandType='Text', CommandTimeout='30']
+      SELECT 1
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (14ms) [Parameters=[@__email_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[Email], [s].[IsActive], [s].[PasswordHash], [s].[ResetTokenExpiresAt], [s].[ResetTokenHash], [s].[RowVersion], [s].[UpdatedAt], [s].[UpdatedBy]
+      FROM [SystemOwners] AS [s]
+      WHERE [s].[Email] = @__email_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (Size = 100), @p2='?' (DbType = DateTimeOffset), @p3='?' (Size = 512), @p4='?' (Size = 45), @p5='?' (DbType = Boolean), @p6='?' (DbType = Guid), @p7='?' (Size = 512)], CommandType='Text', CommandTimeout='30']
+      SET IMPLICIT_TRANSACTIONS OFF;
+      SET NOCOUNT ON;
+      INSERT INTO [SystemOwnerAuditLogs] ([Id], [Action], [CreatedAt], [Description], [IpAddress], [IsSuccess], [SystemOwnerId], [UserAgent])
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
+      An unhandled exception has occurred while executing the request.
+      Domain.Exceptions.UnauthorizedException: Invalid credentials.
+         at Application.Services.System.SystemOwnerAuthService.LoginAsync(SystemOwnerLoginRequestDTO request, String ipAddress, String userAgent, String deviceInfo, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\Application\Services\System\SystemOwnerAuthService.cs:line 69
+         at API.Controllers.System.SystemOwnerAuthController.Login(SystemOwnerLoginRequestDTO request, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Controllers\System\SystemOwnerAuthController.cs:line 36
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+         at API.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Middleware\SecurityHeadersMiddleware.cs:line 21
+         at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+         at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (8ms) [Parameters=[@__email_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[Email], [s].[IsActive], [s].[PasswordHash], [s].[ResetTokenExpiresAt], [s].[ResetTokenHash], [s].[RowVersion], [s].[UpdatedAt], [s].[UpdatedBy]
+      FROM [SystemOwners] AS [s]
+      WHERE [s].[Email] = @__email_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (Size = 100), @p2='?' (DbType = DateTimeOffset), @p3='?' (Size = 512), @p4='?' (Size = 45), @p5='?' (DbType = Boolean), @p6='?' (DbType = Guid), @p7='?' (Size = 512), @p8='?' (DbType = Guid), @p9='?' (DbType = DateTimeOffset), @p10='?' (DbType = Guid), @p11='?' (Size = 512), @p12='?' (Size = 45), @p13='?' (DbType = DateTimeOffset), @p14='?' (DbType = DateTimeOffset), @p15='?' (Size = 128), @p16='?' (DbType = DateTimeOffset), @p17='?' (DbType = Guid), @p18='?' (DbType = DateTimeOffset), @p19='?' (DbType = Guid), @p20='?' (Size = 512)], CommandType='Text', CommandTimeout='30']
+      SET NOCOUNT ON;
+      INSERT INTO [SystemOwnerAuditLogs] ([Id], [Action], [CreatedAt], [Description], [IpAddress], [IsSuccess], [SystemOwnerId], [UserAgent])
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+      INSERT INTO [SystemOwnerSessions] ([Id], [CreatedAt], [CreatedBy], [DeviceInfo], [IpAddress], [LastUsedAt], [RefreshTokenExpiresAt], [RefreshTokenHash], [RefreshTokenRevokedAt], [SystemOwnerId], [UpdatedAt], [UpdatedBy], [UserAgent])
+      OUTPUT INSERTED.[RowVersion]
+      VALUES (@p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@__get_Item_0='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[Email], [s].[IsActive], [s].[PasswordHash], [s].[ResetTokenExpiresAt], [s].[ResetTokenHash], [s].[RowVersion], [s].[UpdatedAt], [s].[UpdatedBy]
+      FROM [SystemOwners] AS [s]
+      WHERE [s].[Id] = @__get_Item_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@__systemOwnerId_0='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[DeviceInfo], [s].[IpAddress], [s].[LastUsedAt], [s].[RefreshTokenExpiresAt], [s].[RefreshTokenHash], [s].[RefreshTokenRevokedAt], [s].[RowVersion], [s].[SystemOwnerId], [s].[UpdatedAt], [s].[UpdatedBy], [s].[UserAgent]
+      FROM [SystemOwnerSessions] AS [s]
+      WHERE [s].[SystemOwnerId] = @__systemOwnerId_0
+      ORDER BY [s].[LastUsedAt] DESC
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@__tokenHash_0='?' (Size = 128)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[DeviceInfo], [s].[IpAddress], [s].[LastUsedAt], [s].[RefreshTokenExpiresAt], [s].[RefreshTokenHash], [s].[RefreshTokenRevokedAt], [s].[RowVersion], [s].[SystemOwnerId], [s].[UpdatedAt], [s].[UpdatedBy], [s].[UserAgent]
+      FROM [SystemOwnerSessions] AS [s]
+      WHERE [s].[RefreshTokenHash] = @__tokenHash_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (3ms) [Parameters=[@__get_Item_0='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[Email], [s].[IsActive], [s].[PasswordHash], [s].[ResetTokenExpiresAt], [s].[ResetTokenHash], [s].[RowVersion], [s].[UpdatedAt], [s].[UpdatedBy]
+      FROM [SystemOwners] AS [s]
+      WHERE [s].[Id] = @__get_Item_0
+fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
+      An unhandled exception has occurred while executing the request.
+      System.ObjectDisposedException: Cannot access a disposed object.
+      Object name: 'System.Security.Cryptography.RSABCrypt'.
+         at System.Security.Cryptography.RSABCrypt.GetKey()
+         at System.Security.Cryptography.RSABCrypt.TrySignHash(ReadOnlySpan`1 hash, Span`1 destination, HashAlgorithmName hashAlgorithm, RSASignaturePadding padding, Int32& bytesWritten)
+         at System.Security.Cryptography.RSA.SignHash(ReadOnlySpan`1 hash, Span`1 destination, HashAlgorithmName hashAlgorithm, RSASignaturePadding padding)
+         at System.Security.Cryptography.RSABCrypt.SignHash(Byte[] hash, HashAlgorithmName hashAlgorithm, RSASignaturePadding padding)
+         at Microsoft.IdentityModel.Tokens.AsymmetricAdapter.SignRsa(Byte[] bytes)
+         at Microsoft.IdentityModel.Tokens.AsymmetricAdapter.Sign(Byte[] bytes)
+         at Microsoft.IdentityModel.Tokens.AsymmetricSignatureProvider.Sign(Byte[] input)
+         at Microsoft.IdentityModel.JsonWebTokens.JwtTokenUtilities.CreateEncodedSignature(String input, SigningCredentials signingCredentials)
+         at System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler.WriteToken(SecurityToken token)
+         at Infrastructure.Services.Auth.TokenService.BuildToken(Claim[] claims) in C:\Users\Ahmed\Desktop\saas_starter_template\Infrastructure\Services\Auth\TokenService.cs:line 65
+         at Infrastructure.Services.Auth.TokenService.GenerateSystemOwnerAccessToken(SystemOwnerEntity owner) in C:\Users\Ahmed\Desktop\saas_starter_template\Infrastructure\Services\Auth\TokenService.cs:line 46
+         at Application.Services.System.SystemOwnerAuthService.CreateSession(SystemOwnerEntity owner, String ipAddress, String userAgent, String deviceInfo) in C:\Users\Ahmed\Desktop\saas_starter_template\Application\Services\System\SystemOwnerAuthService.cs:line 222
+         at Application.Services.System.SystemOwnerAuthService.RefreshAsync(SystemOwnerRefreshRequestDTO request, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\Application\Services\System\SystemOwnerAuthService.cs:line 122
+         at API.Controllers.System.SystemOwnerAuthController.Refresh(SystemOwnerRefreshRequestDTO request, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Controllers\System\SystemOwnerAuthController.cs:line 48
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+         at API.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Middleware\SecurityHeadersMiddleware.cs:line 21
+         at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+         at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (4ms) [Parameters=[@__email_0='?' (Size = 256)], CommandType='Text', CommandTimeout='30']
+      SELECT TOP(1) [s].[Id], [s].[CreatedAt], [s].[CreatedBy], [s].[Email], [s].[IsActive], [s].[PasswordHash], [s].[ResetTokenExpiresAt], [s].[ResetTokenHash], [s].[RowVersion], [s].[UpdatedAt], [s].[UpdatedBy]
+      FROM [SystemOwners] AS [s]
+      WHERE [s].[Email] = @__email_0
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (12ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?' (Size = 100), @p2='?' (DbType = DateTimeOffset), @p3='?' (Size = 512), @p4='?' (Size = 45), @p5='?' (DbType = Boolean), @p6='?' (DbType = Guid), @p7='?' (Size = 512), @p8='?' (DbType = Guid), @p9='?' (DbType = DateTimeOffset), @p10='?' (DbType = Guid), @p11='?' (Size = 512), @p12='?' (Size = 45), @p13='?' (DbType = DateTimeOffset), @p14='?' (DbType = DateTimeOffset), @p15='?' (Size = 128), @p16='?' (DbType = DateTimeOffset), @p17='?' (DbType = Guid), @p18='?' (DbType = DateTimeOffset), @p19='?' (DbType = Guid), @p20='?' (Size = 512)], CommandType='Text', CommandTimeout='30']
+      SET NOCOUNT ON;
+      INSERT INTO [SystemOwnerAuditLogs] ([Id], [Action], [CreatedAt], [Description], [IpAddress], [IsSuccess], [SystemOwnerId], [UserAgent])
+      VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7);
+      INSERT INTO [SystemOwnerSessions] ([Id], [CreatedAt], [CreatedBy], [DeviceInfo], [IpAddress], [LastUsedAt], [RefreshTokenExpiresAt], [RefreshTokenHash], [RefreshTokenRevokedAt], [SystemOwnerId], [UpdatedAt], [UpdatedBy], [UserAgent])
+      OUTPUT INSERTED.[RowVersion]
+      VALUES (@p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20);
+info: Microsoft.EntityFrameworkCore.Database.Command[20101]
+      Executed DbCommand (11ms) [Parameters=[@__ef_filter__IsSystemOwner_0='?' (DbType = Boolean), @__slug_0='?' (Size = 100)], CommandType='Text', CommandTimeout='30']
+      SELECT CASE
+          WHEN EXISTS (
+              SELECT 1
+              FROM [Tenants] AS [t]
+              LEFT JOIN (
+                  SELECT [t1].[Id], [t1].[CreatedAt], [t1].[CreatedBy], [t1].[Description], [t1].[FaviconUrl], [t1].[LogoUrl], [t1].[Name], [t1].[PrimaryColor], [t1].[RowVersion], [t1].[SecondaryColor], [t1].[Slug], [t1].[SmtpHost], [t1].[SmtpPort], [t1].[SmtpSenderEmail], [t1].[SmtpSenderPasswordEncrypted], [t1].[TenantId], [t1].[UpdatedAt], [t1].[UpdatedBy]
+                  FROM [TenantSettings] AS [t1]
+                  WHERE @__ef_filter__IsSystemOwner_0 = CAST(1 AS bit)
+              ) AS [t0] ON [t].[Id] = [t0].[TenantId]
+              WHERE [t0].[Id] IS NOT NULL AND [t0].[Slug] = @__slug_0) THEN CAST(1 AS bit)
+          ELSE CAST(0 AS bit)
+      END
+fail: Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware[1]
+      An unhandled exception has occurred while executing the request.
+      Domain.Exceptions.ConflictException: Tenant with slug 'acme' already exists.
+         at Application.Services.System.TenantManagementService.CreateAsync(CreateTenantDTO dto, Guid systemOwnerId, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\Application\Services\System\TenantManagementService.cs:line 57
+         at API.Controllers.System.TenantManagementController.Create(CreateTenantDTO request, CancellationToken ct) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Controllers\System\TenantManagementController.cs:line 64
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.RateLimiting.RateLimitingMiddleware.InvokeInternal(HttpContext context, EnableRateLimitingAttribute enableRateLimitingAttribute)
+         at API.Middleware.SecurityHeadersMiddleware.InvokeAsync(HttpContext context) in C:\Users\Ahmed\Desktop\saas_starter_template\API\Middleware\SecurityHeadersMiddleware.cs:line 21
+         at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+         at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+         at Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddlewareImpl.<Invoke>g__Awaited|10_0(ExceptionHandlerMiddlewareImpl middleware, HttpContext context, Task task)
